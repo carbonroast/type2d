@@ -792,6 +792,7 @@ GameObject:
   - component: {fileID: 301842600}
   - component: {fileID: 301842599}
   - component: {fileID: 301842598}
+  - component: {fileID: 301842601}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -885,6 +886,19 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &301842601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 301842597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 284e6d0429fd8424cb57c1c722622011, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  spawnPositions: []
 --- !u!1 &332162764
 GameObject:
   m_ObjectHideFlags: 0
@@ -2051,7 +2065,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1787459524}
-  - component: {fileID: 1787459525}
   - component: {fileID: 1787459526}
   m_Layer: 0
   m_Name: SpawnPositions
@@ -2077,19 +2090,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1787459525
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787459523}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a7173d5f256f4f2438cb0df40e2c77de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  spawnPositions: []
 --- !u!114 &1787459526
 MonoBehaviour:
   m_ObjectHideFlags: 0

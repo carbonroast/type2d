@@ -159,11 +159,20 @@ public class ServerController : NetworkBehaviour
         playerStats.hp += damage;
         playerStats.go.GetComponent<PlayerController>().hp.Value = playerStats.hp;
         Debug.Log("Healing: " + damage.ToString() + " to a total of " + playerStats.hp.ToString() + " hp.");
+        if (playerStats.hp <= 0)
+        {
+            SetDefeat(playerStats);
+        }
 
     }
 
     public void Damage(ulong clientId, float hp)
     {
         ChangeHP(playerStatsDict[clientId], hp);
+    }
+
+    public void SetDefeat(PlayerStats playerStats)
+    {
+        playerStats.go.GetComponent<PlayerUI>().SetDefeat();
     }
 }

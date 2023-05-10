@@ -28,7 +28,7 @@ public class PlayerController : NetworkBehaviour
     }
     void Start()
     {
-        
+        inputField.Select();
     }
 
     // Update is called once per frame
@@ -36,7 +36,11 @@ public class PlayerController : NetworkBehaviour
     {
 
         if(!IsOwner) return;
-
+            if(!inputField.isFocused)
+            {
+                inputField.Select();
+                inputField.ActivateInputField();
+            }
 
             if(Input.GetKeyDown(KeyCode.Return))
             {
@@ -89,7 +93,5 @@ public class PlayerController : NetworkBehaviour
     {
         return clientId;
     }
-
-
 
 }

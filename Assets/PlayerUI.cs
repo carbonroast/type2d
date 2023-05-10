@@ -12,6 +12,9 @@ public class PlayerUI : NetworkBehaviour
     public float maxHp;
 
     [SerializeField] private GameObject canvas;
+    [SerializeField] private Slider slider;
+    [SerializeField] private Transform scoreTransform;
+    [SerializeField] private Transform defeatTransform;
 
     void Awake()
     {
@@ -23,6 +26,9 @@ public class PlayerUI : NetworkBehaviour
     {
         if(!IsOwner) return;
         canvas.SetActive(true);
+        slider = canvas.GetComponentInChildren<Slider>();
+        scoreTransform = canvas.transform.Find("Score");
+        defeatTransform = canvas.transform.Find("Defeat");
 
 
     }
@@ -52,7 +58,13 @@ public class PlayerUI : NetworkBehaviour
     public void SetScore(float score)
     {
         Debug.Log("SCORE IS " + score);
-        canvas.GetComponentInChildren<TextMeshProUGUI>().text = "Score: " + score.ToString();
+        scoreTransform.GetComponent<TextMeshProUGUI>().text = "Score: " + score.ToString();
     }
 
+    public void SetDefeat()
+    {
+        defeatTransform.gameObject.SetActive(true);
+        Debug.Log($"Defeated!");
+        defeatTransform.GetComponent<TextMeshProUGUI>().text = "Defeat!";
+    }
 }
