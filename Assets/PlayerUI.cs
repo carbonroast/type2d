@@ -86,12 +86,14 @@ public class PlayerUI : NetworkBehaviour
     public void SetOpponentScore (float score)
     {
         Debug.Log("Opponent Player Score is: " + score);
-        comboTransform.GetComponent<TextMeshProUGUI>().text = "Opponent Score: " + score.ToString();
+        if(!IsOwner) return;
+        oppScoreTransform.GetComponent<TextMeshProUGUI>().text = "Opponent Score: " + score.ToString();
     }
 
     public void SetOpponentHp (float hp)
     {
         Debug.Log("Opponent Player hp is: " + hp);
+        if(!IsOwner) return;
         oppHpTransform.value = hp / maxHp;
     }
 }

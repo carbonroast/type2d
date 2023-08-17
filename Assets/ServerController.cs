@@ -151,6 +151,7 @@ public class ServerController : NetworkBehaviour
         AddCombo(playerStats);
         playerStats.score += total;
         playerStats.go.GetComponent<PlayerController>().score.Value = playerStats.score;
+        UpdateOpponentsClientRpc(playerStats.clientId);
         Debug.Log("Player: " + playerStats.clientId + " Added " + total.ToString() + " for a total Score of: " + playerStats.score.ToString());
     }
 
@@ -181,6 +182,7 @@ public class ServerController : NetworkBehaviour
         playerStats.go.GetComponent<PlayerController>().hp.Value = playerStats.hp;
         ClearCombo(playerStats);
         Debug.Log("Healing: " + damage.ToString() + " to a total of " + playerStats.hp.ToString() + " hp.");
+        UpdateOpponentsClientRpc(playerStats.clientId);
         if (playerStats.hp <= 0)
         {
             SetDefeat(playerStats);
@@ -198,20 +200,19 @@ public class ServerController : NetworkBehaviour
         playerStats.go.GetComponent<PlayerUI>().SetDefeat();
     }
 
-    // [clientRpc]
-    // public void UpdateOpponentScoreClientRpc(ulong clientID)
-    // {
-    //     float score = playerStatsDict[clientID].score;
-    //     list<ulong> clientIDs = new List<ulong>(playerStatsDict.Keys);
-    //     foreach(ulong client in clientIDs)
-    //     {
 
-    //     }
+    [ClientRpc]
+    public void UpdateOpponentsClientRpc(ulong clientID)
+    {
 
-    // }
-    // [clientRpc]
-    // public void UpdateOpponentHpClientRpc(ulong clientID)
-    // {
-        
-    // }
+        float score = playerStatsDict[clientID].score;
+        float hp = playerStatsDict[clientID].hp;
+        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject.GetComponent<PlayerUI>().SetOpponentScore(score);
+            NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject.GetComponent<PlayerUI>().SetOpponentHp(hp);
+        }
+
+    }
+
 }
