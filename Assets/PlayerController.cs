@@ -11,6 +11,8 @@ public class PlayerController : NetworkBehaviour
     public NetworkVariable<float> hp = new NetworkVariable<float>(999); 
     public NetworkVariable<float> score = new NetworkVariable<float>(999); 
 
+    public NetworkVariable<float> combo = new NetworkVariable<float>(999); 
+
     private TMP_InputField inputField;
     private GameObject server;
     private GameObject spawner;
@@ -68,7 +70,9 @@ public class PlayerController : NetworkBehaviour
         score.OnValueChanged += (float oldValue, float newValue) => {
             GetComponent<PlayerUI>().SetScore(newValue);
         };
-        
+        combo.OnValueChanged += (float oldValue, float newValue) => {
+            GetComponent<PlayerUI>().SetCombo(newValue);
+        };
 
     }
 

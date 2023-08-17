@@ -96,10 +96,13 @@ public class ServerController : NetworkBehaviour
         }
     }
 
-    public void RemoveFromDict(ulong clientId, ulong networkId)
+    public void RemoveFromDictAndDestroy(ulong clientId, ulong networkId)
     {
-        Debug.Log("Removed NetworkObjectID: " + networkId);
+        //Debug.Log("Removed NetworkObjectID: " + networkId);
         wordDict[clientId].Remove(networkId);
+        GameObject wordGo = NetworkManager.Singleton.SpawnManager.SpawnedObjects[networkId].gameObject;
+        wordGo.GetComponent<WordController>().Destroy();
+
     }
     public Dictionary<ulong, Dictionary<ulong,string>> GetWordDictionary()
     {
@@ -113,7 +116,7 @@ public class ServerController : NetworkBehaviour
             hp = 10,
             score = 0,
             comboMultiplier = 1,
-            comboNumber = 0,
+            combo = 0,
             go = go,
             clientId = clientId,
         };
@@ -137,10 +140,7 @@ public class ServerController : NetworkBehaviour
             ulong wordNetworkId = wordDict[clientId].FirstOrDefault(x => x.Value == clientInput).Key;
             GameObject wordGo = NetworkManager.Singleton.SpawnManager.SpawnedObjects[wordNetworkId].gameObject;
             CalculateScore(playerStatsDict[clientId], wordGo);
-            RemoveFromDict(clientId, wordNetworkId);
-            wordGo.GetComponent<WordController>().Destroy();
-            
-            
+            RemoveFromDictAndDestroy(clientId, wordNetworkId);   
         }
     }
 
@@ -148,16 +148,38 @@ public class ServerController : NetworkBehaviour
     {
         float pointValue = wordGo.GetComponent<WordController>().word.Value.pointValue;
         float total = pointValue * playerStats.comboMultiplier;
+        AddCombo(playerStats);
         playerStats.score += total;
         playerStats.go.GetComponent<PlayerController>().score.Value = playerStats.score;
-        Debug.Log("Player: " + playerStats.clientId + " Added " + total.ToString() + " for a totat Score of: " + playerStats.score.ToString());
+        Debug.Log("Player: " + playerStats.clientId + " Added " + total.ToString() + " for a total Score of: " + playerStats.score.ToString());
     }
 
+    public void AddCombo(PlayerStats playerStats)
+    {
+        playerStats.combo += 1;
+        playerStats.go.GetComponent<PlayerController>().combo.Value = playerStats.combo;
+        if(playerStats.combo < 10) 
+        {
+            playerStats.comboMultiplier = 1;
+        }
+        else
+        {
+            playerStats.comboMultiplier = Mathf.FloorToInt(playerStats.combo / 10);
+        }
+        
+    }
+
+    public void ClearCombo(PlayerStats playerStats)
+    {
+        playerStats.go.GetComponent<PlayerController>().combo.Value = 0;
+        playerStats.combo = 0;
+    }
 
     private void ChangeHP(PlayerStats playerStats, float damage)
     {
         playerStats.hp += damage;
         playerStats.go.GetComponent<PlayerController>().hp.Value = playerStats.hp;
+        ClearCombo(playerStats);
         Debug.Log("Healing: " + damage.ToString() + " to a total of " + playerStats.hp.ToString() + " hp.");
         if (playerStats.hp <= 0)
         {
@@ -175,4 +197,21 @@ public class ServerController : NetworkBehaviour
     {
         playerStats.go.GetComponent<PlayerUI>().SetDefeat();
     }
+
+    // [clientRpc]
+    // public void UpdateOpponentScoreClientRpc(ulong clientID)
+    // {
+    //     float score = playerStatsDict[clientID].score;
+    //     list<ulong> clientIDs = new List<ulong>(playerStatsDict.Keys);
+    //     foreach(ulong client in clientIDs)
+    //     {
+
+    //     }
+
+    // }
+    // [clientRpc]
+    // public void UpdateOpponentHpClientRpc(ulong clientID)
+    // {
+        
+    // }
 }

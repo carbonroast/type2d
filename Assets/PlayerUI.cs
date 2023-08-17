@@ -12,9 +12,12 @@ public class PlayerUI : NetworkBehaviour
     public float maxHp;
 
     [SerializeField] private GameObject canvas;
-    [SerializeField] private Slider slider;
+    [SerializeField] private Slider hpTransform;
     [SerializeField] private Transform scoreTransform;
+    [SerializeField] private Transform comboTransform;
     [SerializeField] private Transform defeatTransform;
+    [SerializeField] private Transform oppScoreTransform;
+    [SerializeField] private Slider oppHpTransform;
 
     void Awake()
     {
@@ -26,9 +29,12 @@ public class PlayerUI : NetworkBehaviour
     {
         if(!IsOwner) return;
         canvas.SetActive(true);
-        slider = canvas.GetComponentInChildren<Slider>();
+        hpTransform = canvas.transform.Find("Hp").GetComponent<Slider>();
         scoreTransform = canvas.transform.Find("Score");
+        comboTransform = canvas.transform.Find("Combo");
         defeatTransform = canvas.transform.Find("Defeat");
+        oppScoreTransform = canvas.transform.Find("OpponentScore");
+        oppHpTransform = canvas.transform.Find("OpponentHP").GetComponent<Slider>();
 
 
     }
@@ -50,21 +56,42 @@ public class PlayerUI : NetworkBehaviour
 
     public void SetHP(float hp)
     {
-        Debug.Log("HP IS " + hp);
-        canvas.GetComponentInChildren<Slider>().value = hp / maxHp;
+        Debug.Log("Player " + GetComponent<NetworkObject>().OwnerClientId.ToString() + " HP IS " + hp);
+        if(!IsOwner) return;
+        hpTransform.value = hp / maxHp;
             
     }
 
     public void SetScore(float score)
     {
-        Debug.Log("SCORE IS " + score);
+        Debug.Log("Player " + GetComponent<NetworkObject>().OwnerClientId.ToString() +" SCORE IS " + score);
+        if(!IsOwner) return;
         scoreTransform.GetComponent<TextMeshProUGUI>().text = "Score: " + score.ToString();
     }
 
+    public void SetCombo(float num)
+    {
+        Debug.Log("Player " + GetComponent<NetworkObject>().OwnerClientId.ToString() +" COMBO IS " + num);
+        if(!IsOwner) return;
+        comboTransform.GetComponent<TextMeshProUGUI>().text = "Combo: " + num.ToString();
+    }
     public void SetDefeat()
     {
         defeatTransform.gameObject.SetActive(true);
-        Debug.Log($"Defeated!");
+        Debug.Log("Player " + GetComponent<NetworkObject>().OwnerClientId.ToString() +$" is Defeated!");
+        if(!IsOwner) return;
         defeatTransform.GetComponent<TextMeshProUGUI>().text = "Defeat!";
+    }
+
+    public void SetOpponentScore (float score)
+    {
+        Debug.Log("Opponent Player Score is: " + score);
+        comboTransform.GetComponent<TextMeshProUGUI>().text = "Opponent Score: " + score.ToString();
+    }
+
+    public void SetOpponentHp (float hp)
+    {
+        Debug.Log("Opponent Player hp is: " + hp);
+        oppHpTransform.value = hp / maxHp;
     }
 }

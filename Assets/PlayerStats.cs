@@ -11,7 +11,7 @@ public class PlayerStats
 
     public float comboMultiplier;
 
-    public int comboNumber;
+    public float combo;
 
     public GameObject go;
 

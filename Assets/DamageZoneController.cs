@@ -16,13 +16,12 @@ public class DamageZoneController : NetworkBehaviour
     {
         if(other.tag == "Word")
         {
-            Debug.Log("Triggered Object NetworkID:" + other.gameObject.GetComponent<NetworkObject>().NetworkObjectId);
+            //Debug.Log("Triggered Object NetworkID:" + other.gameObject.GetComponent<NetworkObject>().NetworkObjectId);
             ulong clientId = other.GetComponent<WordController>().word.Value.clientId;
             float damage = other.GetComponent<WordController>().word.Value.damage;
             DamagePlayerServerRpc(clientId, damage);
             ulong networkId = other.GetComponent<NetworkObject>().NetworkObjectId;
             RemovefromServerDictServerRpc(clientId, networkId);
-            other.GetComponent<WordController>().Destroy();
         }
     }
 
@@ -35,6 +34,8 @@ public class DamageZoneController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     void RemovefromServerDictServerRpc(ulong clientId, ulong networkId)
     {
-        server.GetComponent<ServerController>().RemoveFromDict(clientId, networkId);
+        server.GetComponent<ServerController>().RemoveFromDictAndDestroy(clientId, networkId);
     }
+
+
 }

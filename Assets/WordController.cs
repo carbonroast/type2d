@@ -39,7 +39,7 @@ public class WordController : NetworkBehaviour
     public void Destroy()
     {
         GetComponent<NetworkObject>().Despawn();
-        Destroy(this.gameObject);
+        //Destroy(this.gameObject);
     }
 
 
