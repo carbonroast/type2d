@@ -10,7 +10,6 @@ public class PlayerController : NetworkBehaviour
 {
     public NetworkVariable<float> hp = new NetworkVariable<float>(999); 
     public NetworkVariable<float> score = new NetworkVariable<float>(999); 
-
     public NetworkVariable<float> combo = new NetworkVariable<float>(999); 
 
     private TMP_InputField inputField;
@@ -23,10 +22,11 @@ public class PlayerController : NetworkBehaviour
     // Start is called before the first frame update
     void Awake() 
     {
+
         inputField = GameObject.Find("InputField").GetComponent<TMP_InputField>();  
         server = GameObject.Find("Server");
         spawner = GameObject.Find("SpawnPositions");
-        
+
     }
     void Start()
     {

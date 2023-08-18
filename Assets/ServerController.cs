@@ -61,6 +61,7 @@ public class ServerController : NetworkBehaviour
         }
     }
 
+
     IEnumerator SpawnWord( ulong clientId)
     {
         Debug.Log($"Player {clientId} is at {playerSpawnPosition[clientId]}");
@@ -130,89 +131,96 @@ public class ServerController : NetworkBehaviour
         ulong clientId = go.GetComponent<NetworkObject>().OwnerClientId;
         playerSpawnPosition[clientId] = go.transform.position;
     }
-    public void CheckWord(string clientInput, ulong clientId)
+    public void CheckWord(string clientInput, ulong clientObjId)
     {
-        Debug.Log("Client: " + clientId + "\n" + " Word: " + clientInput);
+        Debug.Log("Client: " + clientObjId + "\n" + " Word: " + clientInput);
 
 
-        if(wordDict.ContainsKey(clientId) && wordDict[clientId].ContainsValue(clientInput))
+        if(wordDict.ContainsKey(clientObjId) && wordDict[clientObjId].ContainsValue(clientInput))
         {
-            ulong wordNetworkId = wordDict[clientId].FirstOrDefault(x => x.Value == clientInput).Key;
+            ulong wordNetworkId = wordDict[clientObjId].FirstOrDefault(x => x.Value == clientInput).Key;
             GameObject wordGo = NetworkManager.Singleton.SpawnManager.SpawnedObjects[wordNetworkId].gameObject;
-            CalculateScore(playerStatsDict[clientId], wordGo);
-            RemoveFromDictAndDestroy(clientId, wordNetworkId);   
+            CalculateScore(clientObjId, wordGo);
+            RemoveFromDictAndDestroy(clientObjId, wordNetworkId);   
         }
     }
 
-    public void CalculateScore(PlayerStats playerStats, GameObject wordGo)
+    public void CalculateScore(ulong clientObjId, GameObject wordGo)
     {
         float pointValue = wordGo.GetComponent<WordController>().word.Value.pointValue;
-        float total = pointValue * playerStats.comboMultiplier;
-        AddCombo(playerStats);
-        playerStats.score += total;
-        playerStats.go.GetComponent<PlayerController>().score.Value = playerStats.score;
-        UpdateOpponentsClientRpc(playerStats.clientId);
-        Debug.Log("Player: " + playerStats.clientId + " Added " + total.ToString() + " for a total Score of: " + playerStats.score.ToString());
+        float total = pointValue * playerStatsDict[clientObjId].comboMultiplier;
+        AddCombo(clientObjId);
+        playerStatsDict[clientObjId].score += total;
+        playerStatsDict[clientObjId].go.GetComponent<PlayerController>().score.Value = playerStatsDict[clientObjId].score;
+        UpdateOpponentsValues(clientObjId);
+        Debug.Log("Player: " + clientObjId + " Added " + total.ToString() + " for a total Score of: " + playerStatsDict[clientObjId].score.ToString());
     }
 
-    public void AddCombo(PlayerStats playerStats)
+    public void AddCombo(ulong clientObjId)
     {
-        playerStats.combo += 1;
-        playerStats.go.GetComponent<PlayerController>().combo.Value = playerStats.combo;
-        if(playerStats.combo < 10) 
+        playerStatsDict[clientObjId].combo += 1;
+        playerStatsDict[clientObjId].go.GetComponent<PlayerController>().combo.Value = playerStatsDict[clientObjId].combo;
+        if(playerStatsDict[clientObjId].combo < 10) 
         {
-            playerStats.comboMultiplier = 1;
+            playerStatsDict[clientObjId].comboMultiplier = 1;
         }
         else
         {
-            playerStats.comboMultiplier = Mathf.FloorToInt(playerStats.combo / 10);
+            playerStatsDict[clientObjId].comboMultiplier = Mathf.FloorToInt(playerStatsDict[clientObjId].combo / 10);
         }
         
     }
 
-    public void ClearCombo(PlayerStats playerStats)
+    public void ClearCombo(ulong clientObjId)
     {
-        playerStats.go.GetComponent<PlayerController>().combo.Value = 0;
-        playerStats.combo = 0;
+        playerStatsDict[clientObjId].go.GetComponent<PlayerController>().combo.Value = 0;
+        playerStatsDict[clientObjId].combo = 0;
     }
 
-    private void ChangeHP(PlayerStats playerStats, float damage)
+    private void ChangeHP(ulong clientObjId, float damage)
     {
-        playerStats.hp += damage;
-        playerStats.go.GetComponent<PlayerController>().hp.Value = playerStats.hp;
-        ClearCombo(playerStats);
-        Debug.Log("Healing: " + damage.ToString() + " to a total of " + playerStats.hp.ToString() + " hp.");
-        UpdateOpponentsClientRpc(playerStats.clientId);
-        if (playerStats.hp <= 0)
+        playerStatsDict[clientObjId].hp += damage;
+        playerStatsDict[clientObjId].go.GetComponent<PlayerController>().hp.Value = playerStatsDict[clientObjId].hp;
+        ClearCombo(clientObjId);
+        Debug.Log("Healing: " + damage.ToString() + " to a total of " + playerStatsDict[clientObjId].hp.ToString() + " hp.");
+        UpdateOpponentsValues(clientObjId);
+        if (playerStatsDict[clientObjId].hp <= 0)
         {
-            SetDefeat(playerStats);
+            SetDefeat(clientObjId);
         }
 
     }
 
-    public void Damage(ulong clientId, float hp)
+    public void Damage(ulong clientObjId, float hp)
     {
-        ChangeHP(playerStatsDict[clientId], hp);
+        ChangeHP(clientObjId, hp);
     }
 
-    public void SetDefeat(PlayerStats playerStats)
+    public void SetDefeat( ulong clientObjId)
     {
-        playerStats.go.GetComponent<PlayerUI>().SetDefeat();
+        playerStatsDict[clientObjId].go.GetComponent<PlayerUI>().SetDefeat();
     }
 
 
-    [ClientRpc]
-    public void UpdateOpponentsClientRpc(ulong clientID)
-    {
 
-        float score = playerStatsDict[clientID].score;
-        float hp = playerStatsDict[clientID].hp;
+    public void UpdateOpponentsValues(ulong clientObjId)
+    {
+        float score = playerStatsDict[clientObjId].score;
+        float hp = playerStatsDict[clientObjId].hp;
         foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
-            NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject.GetComponent<PlayerUI>().SetOpponentScore(score);
-            NetworkManager.Singleton.ConnectedClients[clientId].PlayerObject.GetComponent<PlayerUI>().SetOpponentHp(hp);
+            if( clientId != clientObjId)
+            {
+                UpdateOpponentsValuesClientRpc(clientObjId, clientId, score, hp);
+            }
+
         }
 
     }
 
+    [ClientRpc]
+    public void UpdateOpponentsValuesClientRpc(ulong senderId, ulong clientId,float score, float hp)
+    {
+        playerStatsDict[clientId].go.GetComponent<PlayerUI>().SetOpponentInfo(senderId, score, hp);
+    }
 }
