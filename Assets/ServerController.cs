@@ -4,6 +4,8 @@ using UnityEngine;
 using Unity.Netcode;
 using Unity.Collections;
 using System.Linq;
+using System.IO;
+using System.Text;
 
 public class ServerController : NetworkBehaviour
 {
@@ -16,12 +18,22 @@ public class ServerController : NetworkBehaviour
     
     [SerializeField]private GameObject spawnGameObjectPrefab;
 
-    private List<string> wordList = new List<string>(){"test","network","why"};
+    private List<string> wordList = new List<string>();
+
+    public int wordCount;
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        var fileStream = new FileStream("Assets/WordList.txt", FileMode.Open, FileAccess.Read);
+        using (var streamReader = new StreamReader(fileStream, Encoding.UTF8))
+        {
+            string line;
+            while ((line = streamReader.ReadLine()) != null)
+            {
+                wordList.Add(line);
+            }
+        }
     }
 
     // Update is called once per frame
@@ -55,33 +67,38 @@ public class ServerController : NetworkBehaviour
    
     private void SpawnWords()
     {
-        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
-        {
-        StartCoroutine(SpawnWord(clientId));
+        StartCoroutine(SpawnWordsForClients());
+    }
+    IEnumerator SpawnWordsForClients()
+    {
+        for (int i = 0; i < wordCount; i++){
+            int randomWordIndex = Random.Range(0,wordList.Count());
+            Vector3 randomPosition = new Vector3(Random.Range(-5,5),Random.Range(6,7),Random.Range(-2,2));
+            foreach (ulong clientObjId in NetworkManager.Singleton.ConnectedClientsIds)
+            {
+                yield return StartCoroutine(SpawnWord(clientObjId, randomPosition, randomWordIndex));
+            }
+             yield return new WaitForSeconds(1.5f);
         }
+        
     }
 
 
-    IEnumerator SpawnWord( ulong clientId)
+    IEnumerator SpawnWord( ulong clientObjId, Vector3 randomPosition, int randomWordIndex)
     {
-        Debug.Log($"Player {clientId} is at {playerSpawnPosition[clientId]}");
-        foreach (string word in wordList)
-        {
-            Vector3 randomPosition = new Vector3(Random.Range(-5,5),Random.Range(6,7),Random.Range(-2,2)) + playerSpawnPosition[clientId];
-            GameObject wordGO = Instantiate(spawnGameObjectPrefab, randomPosition, Quaternion.identity);
-            wordGO.GetComponent<NetworkObject>().Spawn();
-            wordGO.GetComponent<WordController>().word.Value = new Word {
-                phrase = word,
-                speed = 1,
-                clientId = clientId,
-                pointValue = 1,
-                damage = -1,
-            };
-                            
-            AddToDict(clientId, wordGO.GetComponent<NetworkObject>().NetworkObjectId, word);
-            yield return new WaitForSeconds(1.5f);
-        }
-
+        string word = wordList[randomWordIndex];
+        GameObject wordGO = Instantiate(spawnGameObjectPrefab, randomPosition + playerSpawnPosition[clientObjId], Quaternion.identity);
+        wordGO.GetComponent<NetworkObject>().SpawnWithOwnership(clientObjId);
+        wordGO.GetComponent<WordController>().word.Value = new Word {
+            phrase = word,
+            speed = 1,
+            clientId = clientObjId,
+            pointValue = 1,
+            damage = -1,
+        };
+        AddWordToClientLocalListClientRpc(clientObjId, wordGO.GetComponent<NetworkObject>().NetworkObjectId);
+        AddToDict(clientObjId, wordGO.GetComponent<NetworkObject>().NetworkObjectId, word);
+        yield return null;
     }
     private void AddToDict(ulong clientId, ulong networkId, string word)
     {
@@ -97,10 +114,22 @@ public class ServerController : NetworkBehaviour
         }
     }
 
+    [ClientRpc]
+    private void AddWordToClientLocalListClientRpc(ulong clientObjId, ulong networkId)
+    {
+        playerStatsDict[clientObjId].go.GetComponent<PlayerController>().RegisterWordNetworkId(networkId);
+    }
+
+    [ClientRpc]
+    private void RemoveWordToClientLocalListClientRpc(ulong clientObjId, ulong networkId)
+    {
+        playerStatsDict[clientObjId].go.GetComponent<PlayerController>().RemoveWordNetworkId(networkId);
+    }
     public void RemoveFromDictAndDestroy(ulong clientId, ulong networkId)
     {
         //Debug.Log("Removed NetworkObjectID: " + networkId);
         wordDict[clientId].Remove(networkId);
+        RemoveWordToClientLocalListClientRpc(clientId, networkId);
         GameObject wordGo = NetworkManager.Singleton.SpawnManager.SpawnedObjects[networkId].gameObject;
         wordGo.GetComponent<WordController>().Destroy();
 
@@ -207,11 +236,12 @@ public class ServerController : NetworkBehaviour
     {
         float score = playerStatsDict[clientObjId].score;
         float hp = playerStatsDict[clientObjId].hp;
+        float combo = playerStatsDict[clientObjId].combo;
         foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
             if( clientId != clientObjId)
             {
-                UpdateOpponentsValuesClientRpc(clientObjId, clientId, score, hp);
+                UpdateOpponentsValuesClientRpc(clientObjId, clientId, score, combo, hp);
             }
 
         }
@@ -219,8 +249,8 @@ public class ServerController : NetworkBehaviour
     }
 
     [ClientRpc]
-    public void UpdateOpponentsValuesClientRpc(ulong senderId, ulong clientId,float score, float hp)
+    public void UpdateOpponentsValuesClientRpc(ulong senderId, ulong clientId,float score, float combo, float hp)
     {
-        playerStatsDict[clientId].go.GetComponent<PlayerUI>().SetOpponentInfo(senderId, score, hp);
+        playerStatsDict[clientId].go.GetComponent<PlayerUI>().SetOpponentInfo(senderId, score, combo, hp);
     }
 }

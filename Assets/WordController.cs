@@ -25,7 +25,6 @@ public class WordController : NetworkBehaviour
     {  
 
         word.OnValueChanged += (Word oldValue, Word newValue) => {
-            Debug.Log("Word: " + newValue.phrase + " Speed: " + newValue.speed);
             textUI.text = newValue.phrase;
         };
 

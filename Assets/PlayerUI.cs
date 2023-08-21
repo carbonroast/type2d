@@ -18,6 +18,7 @@ public class PlayerUI : NetworkBehaviour
     [SerializeField] private Transform defeatTransform;
     [SerializeField] private Transform oppScoreTransform;
     [SerializeField] private Slider oppHpTransform;
+    [SerializeField] private Transform oppComboTransform;
 
     void Awake()
     {
@@ -35,6 +36,7 @@ public class PlayerUI : NetworkBehaviour
         defeatTransform = canvas.transform.Find("Defeat");
         oppScoreTransform = canvas.transform.Find("OpponentScore");
         oppHpTransform = canvas.transform.Find("OpponentHP").GetComponent<Slider>();
+        oppComboTransform = canvas.transform.Find("OpponentCombo");
 
 
     }
@@ -83,12 +85,14 @@ public class PlayerUI : NetworkBehaviour
         defeatTransform.GetComponent<TextMeshProUGUI>().text = "Defeat!";
     }
 
-    public void SetOpponentInfo (ulong clientId, float score, float hp)
+    public void SetOpponentInfo (ulong clientId, float score, float combo, float hp)
     {
         Debug.Log("Opponent Player Score is: " + score);
         Debug.Log("Opponent Player hp is: " + hp);
+        Debug.Log("Opponent Player Combo is: " + combo);
         if(!IsOwner) return;
         oppScoreTransform.GetComponent<TextMeshProUGUI>().text = "Opponent Score: " + score.ToString();
+        oppComboTransform.GetComponent<TextMeshProUGUI>().text = "Opponent Combo: " + combo.ToString();
         oppHpTransform.value = hp / maxHp;
     }
 }
